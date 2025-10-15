@@ -29,3 +29,25 @@ chmod +x install_callcenter_ai.sh
 cd ~/callcenter_ai
 source venv/bin/activate
 streamlit run app/app.py
+
+3️⃣ Run Streamlit Dashboard
+cd ~/callcenter_ai
+source venv/bin/activate
+streamlit run app/app.py
+
+4️⃣ (Optional) Set Up Grafana for Visualization
+sudo apt install grafana -y
+sudo systemctl enable grafana-server
+sudo systemctl start grafana-server
+
+~/callcenter_ai/
+├── venv/                     # Python virtual environment
+├── whisper.cpp/              # Offline speech-to-text engine
+│   └── models/ggml-base.bin
+├── models/
+│   ├── distilbert-base-uncased-emotion/
+│   └── twitter-roberta-base-sentiment/
+├── rasa_project/             # Intent detection project
+├── app/
+│   └── app.py                # Streamlit dashboard
+└── install_callcenter_ai.sh  # Setup script
