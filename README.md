@@ -1,23 +1,31 @@
-# Call-Center-Mindset
-Ubuntu 22.04 installation script that sets up your call-center emotion-analysis pipeline:
+# 🎧 Call Center Emotion & Sentiment AI (On-Prem Ubuntu 22.04)
 
+An **open-source, on-premise AI pipeline** for analyzing **call center audio** to detect **emotion**, **sentiment**, and **intent** using local models — no cloud required.
+
+---
+
+## 🧠 Architecture Overview
+
+```text
 [Audio Input] 
- → [Whisper.cpp] 
- → [Transcript] 
- → [DistilBERT Emotion Model + RoBERTa Sentiment + Rasa Intent]
- → [Aggregator (Python)]
- → [Dashboard (Streamlit/Grafana)]
+   ↓
+[Whisper.cpp - Speech to Text]
+   ↓
+[Transcript]
+   ↓
+[DistilBERT Emotion Model] + [RoBERTa Sentiment Model] + [Rasa Intent Classifier]
+   ↓
+[Aggregator (Python)]
+   ↓
+[Dashboard (Streamlit / Grafana)]
 
-
- wget [https://your-domain-or-github/install_callcenter_ai.sh](https://github.com/redhatmurali/Call-Center-Mindset/blob/main/install_callcenter_ai.sh)
+1️⃣ Download and Install
+wget https://github.com/redhatmurali/Call-Center-Mindset/blob/main/install_callcenter_ai.sh
 chmod +x install_callcenter_ai.sh
 ./install_callcenter_ai.sh
 
 
-cd ~/callcenter_ai/rasa_project
-rasa train
-rasa shell nlu
-
-sudo apt install grafana -y
-sudo systemctl enable grafana-server
-sudo systemctl start grafana-server
+2️⃣ Train Rasa Intent Model
+cd ~/callcenter_ai
+source venv/bin/activate
+streamlit run app/app.py
