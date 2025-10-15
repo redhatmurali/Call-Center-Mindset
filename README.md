@@ -9,7 +9,7 @@ Ubuntu 22.04 installation script that sets up your call-center emotion-analysis 
  → [Dashboard (Streamlit/Grafana)]
 
 
- wget https://your-domain-or-github/install_callcenter_ai.sh
+ wget [https://your-domain-or-github/install_callcenter_ai.sh](https://github.com/redhatmurali/Call-Center-Mindset/blob/main/install_callcenter_ai.sh)
 chmod +x install_callcenter_ai.sh
 ./install_callcenter_ai.sh
 
