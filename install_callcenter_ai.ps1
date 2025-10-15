@@ -1,79 +1,57 @@
-<#
-Title: Call Center Mindset AI Stack - Windows Installation Script
-Author: ChatGPT GPT-5
-Platform: Windows 10/11 (PowerShell 7+)
-#>
+# ==========================================================
+# 🧠 Call Center Mindset AI Stack Installer for Windows (PS 5)
+# ==========================================================
 
-Write-Host "=== 🧠 Installing Call-Center Mindset AI Stack on Windows ===" -ForegroundColor Cyan
+Write-Host "=== Installing Call-Center Mindset AI Stack (Windows, PowerShell 5) ==="
 
-# ---- 1️⃣ Check for Admin Privileges ----
-if (-not ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")) {
-    Write-Host "Please run PowerShell as Administrator!" -ForegroundColor Red
+# ---- 1️⃣ Pre-Check ----
+if (-not (Test-Path "C:\Program Files\Python311\python.exe")) {
+    Write-Host "Please install Python 3.10+ first from https://www.python.org/downloads/windows/" -ForegroundColor Yellow
+    Write-Host "Then re-run this script."
     exit
 }
 
-# ---- 2️⃣ Ensure Required Packages ----
-Write-Host "Installing dependencies..."
-winget install -e --id Git.Git -h
-winget install -e --id Python.Python.3.11 -h
-winget install -e --id FFmpeg.FFmpeg -h
+# ---- 2️⃣ Create Project Directory ----
+$ProjectPath = "$env:USERPROFILE\callcenter_ai"
+if (-not (Test-Path $ProjectPath)) { New-Item -ItemType Directory -Path $ProjectPath | Out-Null }
+Set-Location $ProjectPath
 
-# Refresh environment so Python is visible
-$env:Path += ";C:\Program Files\Python311\Scripts;C:\Program Files\Python311\"
+# ---- 3️⃣ Create Virtual Environment ----
+& "C:\Program Files\Python311\python.exe" -m venv venv
+cmd /c "venv\Scripts\activate && python -m pip install --upgrade pip wheel setuptools"
 
-# ---- 3️⃣ Project Directory ----
-New-Item -ItemType Directory -Path "$env:USERPROFILE\callcenter_ai" -Force | Out-Null
-Set-Location "$env:USERPROFILE\callcenter_ai"
+# ---- 4️⃣ Install Core Python Libraries ----
+cmd /c "venv\Scripts\activate && pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu"
+cmd /c "venv\Scripts\activate && pip install transformers datasets sentencepiece accelerate soundfile librosa numpy pandas scikit-learn tqdm streamlit rasa==3.6.18"
 
-# ---- 4️⃣ Python Virtual Environment ----
-python -m venv venv
-.\venv\Scripts\Activate.ps1
-python -m pip install --upgrade pip wheel setuptools
+# ---- 5️⃣ Install Whisper.cpp (Speech-to-Text) ----
+Write-Host "Downloading Whisper.cpp ..."
+if (-not (Test-Path "$ProjectPath\whisper.cpp")) { git clone https://github.com/ggerganov/whisper.cpp.git }
+Set-Location "$ProjectPath\whisper.cpp"
+Write-Host "Downloading base model ..."
+Invoke-WebRequest -Uri "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-base.bin" -OutFile ".\ggml-base.bin"
+Set-Location $ProjectPath
 
-# ---- 5️⃣ Install Core Python Libraries ----
-pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
-pip install transformers datasets sentencepiece accelerate soundfile librosa numpy pandas scikit-learn tqdm
-
-# ---- 6️⃣ Install Whisper.cpp (Windows) ----
-Write-Host "=== Installing Whisper.cpp ==="
-git clone https://github.com/ggerganov/whisper.cpp.git
-Set-Location whisper.cpp
-# Build (requires MSBuild / Visual Studio Build Tools)
-if (Test-Path "msvc") {
-    Write-Host "Building whisper.cpp using MSVC..."
-    msbuild .\examples\main\main.vcxproj /p:Configuration=Release
-} else {
-    Write-Host "Please ensure Visual Studio Build Tools or CMake is installed."
-}
-# Download base model
-Invoke-WebRequest -Uri "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-base.bin" -OutFile ".\models\ggml-base.bin"
-Set-Location ..
-
-# ---- 7️⃣ Download Emotion & Sentiment Models ----
-New-Item -ItemType Directory -Path ".\models" -Force | Out-Null
-python - <<'PYCODE'
+# ---- 6️⃣ Download Emotion & Sentiment Models ----
+Write-Host "Downloading Hugging Face models (this may take a few minutes) ..."
+cmd /c "venv\Scripts\activate && python - <<END
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
-models = [
-    "bhadresh-savani/distilbert-base-uncased-emotion",
-    "cardiffnlp/twitter-roberta-base-sentiment"
-]
-for m in models:
-    print(f"Downloading {m} ...")
+import os
+os.makedirs('models', exist_ok=True)
+for m in ['bhadresh-savani/distilbert-base-uncased-emotion','cardiffnlp/twitter-roberta-base-sentiment']:
+    print(f'Downloading {m} ...')
     tok = AutoTokenizer.from_pretrained(m)
     mod = AutoModelForSequenceClassification.from_pretrained(m)
-    tok.save_pretrained(m.split('/')[-1])
-    mod.save_pretrained(m.split('/')[-1])
-PYCODE
+    save = m.split('/')[-1]
+    tok.save_pretrained(os.path.join('models', save))
+    mod.save_pretrained(os.path.join('models', save))
+END"
 
-# ---- 8️⃣ Install Rasa ----
-Write-Host "=== Installing Rasa ==="
-pip install rasa==3.6.18
-rasa init --no-prompt --project rasa_project
+# ---- 7️⃣ Create Streamlit Dashboard App ----
+$AppPath = "$ProjectPath\app"
+if (-not (Test-Path $AppPath)) { New-Item -ItemType Directory -Path $AppPath | Out-Null }
 
-# ---- 9️⃣ Create Streamlit App ----
-New-Item -ItemType Directory -Path ".\app" -Force | Out-Null
-Set-Location .\app
-@"
+@'
 import streamlit as st, subprocess, os
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 import torch, json
@@ -84,8 +62,8 @@ st.title("🎧 Real-Time Call Emotion & Sentiment Analysis")
 audio_file = st.file_uploader("Upload Call Audio (.wav or .mp3)", type=["wav","mp3"])
 if audio_file:
     with open("temp_audio.wav","wb") as f: f.write(audio_file.read())
-    st.info("Transcribing with Whisper.cpp...")
-    result = subprocess.run(["..\\whisper.cpp\\Release\\main.exe","-m","..\\whisper.cpp\\models\\ggml-base.bin","-f","temp_audio.wav","-otxt"],
+    st.info("Transcribing with Whisper.cpp (expect ~1min for 30s audio)...")
+    result = subprocess.run(["..\\whisper.cpp\\main.exe","-m","..\\whisper.cpp\\ggml-base.bin","-f","temp_audio.wav","-otxt"],
                             capture_output=True, text=True)
     transcript = result.stdout if result.stdout else open("temp_audio.wav.txt").read()
     st.text_area("Transcript", transcript, height=200)
@@ -107,18 +85,15 @@ if audio_file:
     st.json(json.dumps({"label_id": int(emo_label), "probabilities": emo_pred.tolist()}))
     st.subheader("💬 Sentiment Prediction")
     st.json(json.dumps({"label_id": int(sen_label), "probabilities": sen_pred.tolist()}))
-"@ | Out-File -Encoding utf8 app.py
-Set-Location ..
+'@ | Out-File "$AppPath\app.py" -Encoding UTF8
 
-# ---- 🔟 Install Streamlit ----
-pip install streamlit
-
-Write-Host "=== ✅ Installation Complete ===" -ForegroundColor Green
 Write-Host ""
-Write-Host "To start the app:" -ForegroundColor Yellow
+Write-Host "=== ✅ Installation Complete ==="
+Write-Host ""
+Write-Host "To start the app:"
 Write-Host "------------------------------------------------------------"
-Write-Host "cd `$env:USERPROFILE\callcenter_ai"
-Write-Host "venv\Scripts\Activate.ps1"
+Write-Host "cd $ProjectPath"
+Write-Host "venv\Scripts\activate"
 Write-Host "streamlit run app\app.py"
 Write-Host "------------------------------------------------------------"
-Write-Host "Dashboard: http://localhost:8501"
+Write-Host "Then open: http://localhost:8501"
