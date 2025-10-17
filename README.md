@@ -9,7 +9,7 @@ An **open-source, on-premise AI pipeline** for analyzing **call center audio** t
 ```text
 [Audio Input] 
    ↓
-[Whisper.cpp - Speech to Text]
+[Whisper.cpp (or) WhisperX - Speech to Text]
    ↓
 [Transcript]
    ↓
