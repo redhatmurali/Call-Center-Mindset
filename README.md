@@ -9,7 +9,7 @@ An **open-source, on-premise AI pipeline** for analyzing **call center audio** t
 ```text
 [Audio Input] 
    ↓
-[Whisper.cpp (or) WhisperX - Speech to Text]
+[Whisper.cpp (or) WhisperX - Speech to Text]  large-v3
    ↓
 [Transcript]
    ↓
@@ -51,3 +51,16 @@ sudo systemctl start grafana-server
 ├── app/
 │   └── app.py                # Streamlit dashboard
 └── install_callcenter_ai.sh  # Setup script
+
+
+
+[Audio Input] 
+   ↓
+Wav2Vec2
+   ↓
+[DistilBERT Emotion Model] + [RoBERTa Sentiment Model] + [Rasa Intent Classifier]
+   ↓
+OUTPUT
+
+
+
