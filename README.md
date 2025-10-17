@@ -56,11 +56,28 @@ sudo systemctl start grafana-server
 
 [Audio Input] 
    ↓
-Wav2Vec2
+IndicWav2Vec2-large-xlsr (AI4Bharat) (or) Wav2Vec2-large-xlsr-128
    ↓
 [DistilBERT Emotion Model] + [RoBERTa Sentiment Model] + [Rasa Intent Classifier]
    ↓
 OUTPUT
 
+
+🎙️ Audio Input
+    ↓
+🎧 ASR (Whisper / IndicWav2Vec2)
+    ↓
+🧾 Transcribed Text
+    ↓
+───────────────────────────────────
+🧩 NLP Layer (Parallel)
+    ├── DistilBERT → Emotion
+    ├── RoBERTa → Sentiment
+    └── Rasa → Intent
+───────────────────────────────────
+    ↓
+🤖 Dialogue Manager (e.g., Rasa Core)
+    ↓
+🗣️ Response (TTS optional)
 
 
