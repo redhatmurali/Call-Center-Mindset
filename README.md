@@ -70,6 +70,8 @@ OUTPUT
 🧾 Transcribed Text
     ↓
 ───────────────────────────────────
+DeBERTa-v3-base or large
+         (OR)
 🧩 NLP Layer (Parallel)
     ├── DistilBERT → Emotion
     ├── RoBERTa → Sentiment
