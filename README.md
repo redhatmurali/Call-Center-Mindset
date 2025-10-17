@@ -83,3 +83,18 @@ DeBERTa-v3-base or large
 🗣️ Response (TTS optional)
 
 
+BEST
+
+🎙️ Voice Input
+   ↓
+🧩 Whisper-large-v3  (ASR)
+   ↓
+🧠 NLP Layer
+   ├── DeBERTa-v3-large (Emotion)
+   ├── XLM-RoBERTa-large (Sentiment)
+   └── Sentence-BERT + Rasa (Intent)
+   ↓
+🤖 Decision / Dialogue Manager
+   ↓
+🗣️ TTS (Optional)
+
